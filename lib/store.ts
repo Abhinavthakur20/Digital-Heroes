@@ -67,7 +67,8 @@ function saveStoreToFile(store: MemoryStore) {
 function loadStoreFromFile(): MemoryStore | null {
   try {
     if (fs.existsSync(STORE_FILE)) {
-      const content = fs.readFileSync(STORE_FILE, "utf-8");
+      const content = fs.readFileSync(STORE_FILE, "utf-8").trim();
+      if (!content) return null;
       const parsed = JSON.parse(content);
       return {
         charities: parsed.charities || [],
@@ -80,8 +81,8 @@ function loadStoreFromFile(): MemoryStore | null {
         passwords: new Map(parsed.passwords || [])
       };
     }
-  } catch (err) {
-    console.error("Warning: Failed to read persistent store file:", err);
+  } catch {
+    // Ignore corrupt/empty file and fall back cleanly
   }
   return null;
 }

@@ -4,6 +4,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { StatusPill } from "@/components/status-pill";
 import { UserPrizeActivity } from "@/components/user-prize-activity";
 import { DemoSubscriptionToggle } from "@/components/demo-subscription-toggle";
+import { RazorpayButton } from "@/components/razorpay-button";
 import { getCurrentUser } from "@/lib/auth";
 import { getCharity, getScores, getSubscription, getWinners } from "@/lib/store";
 import { money, percent, shortDate } from "@/lib/format";
@@ -39,12 +40,11 @@ export default async function DashboardPage() {
               Your subscription is currently {subscription?.status || "inactive"}. Past golf rounds and giving records are safe, but monthly draw ticket issuance is paused until membership renewal.
             </p>
           </div>
-          <Link
-            href="/api/stripe/checkout?plan=monthly"
-            className="rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900 transition-colors"
-          >
-            Renew Membership via Stripe
-          </Link>
+          <RazorpayButton
+            plan="monthly"
+            label="Renew with Razorpay"
+            className="rounded-lg bg-amber-800 hover:bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+          />
         </div>
       )}
 
