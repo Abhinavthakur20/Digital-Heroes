@@ -13,19 +13,22 @@ import {
   Zap
 } from "lucide-react";
 import { getCharities, getProfiles, getSubscriptions, getWinners } from "@/lib/store";
+import { getCurrentUser } from "@/lib/auth";
 import { activeSubscriptions } from "@/lib/subscription";
 import { money } from "@/lib/format";
 import { KpiCard } from "@/components/kpi-card";
 import { HeroVideo } from "@/components/hero-video";
+import { SubscriptionCards } from "@/components/subscription-cards";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [charities, profiles, subscriptions, winners] = await Promise.all([
+  const [charities, profiles, subscriptions, winners, user] = await Promise.all([
     getCharities(),
     getProfiles(),
     getSubscriptions(),
-    getWinners()
+    getWinners(),
+    getCurrentUser()
   ]);
 
   const featured = charities.filter((charity) => charity.isFeatured);
@@ -318,10 +321,15 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+ 
+       {/* ════════════════════════════════════════════════════════════
+           MEMBERSHIP & SUBSCRIPTION PLANS — Transparent giving & draw entry
+          ════════════════════════════════════════════════════════════ */}
+       <SubscriptionCards user={user} />
 
-      {/* ════════════════════════════════════════════════════════════
-          CTA BANNER — Dark premium call to action
-         ════════════════════════════════════════════════════════════ */}
+       {/* ════════════════════════════════════════════════════════════
+           CTA BANNER — Dark premium call to action
+          ════════════════════════════════════════════════════════════ */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20">
         <div className="relative overflow-hidden rounded-3xl bg-obsidian-950 p-8 sm:p-12 lg:p-16">
           {/* Background decoration */}

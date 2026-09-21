@@ -34,14 +34,26 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
   ];
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 pointer-events-none">
-      <header
-        className={`pointer-events-auto w-full max-w-5xl transition-all duration-500 ease-out rounded-full border ${
+    <>
+      {/* 1. Blurred background strip behind the navbar capsule */}
+      <div
+        aria-hidden="true"
+        className={`fixed top-0 left-0 right-0 h-24 pointer-events-none z-40 transition-all duration-500 backdrop-blur-xl ${
           scrolled
-            ? "bg-[#faf9f6]/92 backdrop-blur-2xl border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)]"
-            : "bg-[#faf9f6]/85 backdrop-blur-xl border-stone-200/70 shadow-[0_8px_28px_rgba(0,0,0,0.08)]"
+            ? "bg-obsidian-950/40"
+            : "bg-gradient-to-b from-obsidian-950/60 via-obsidian-950/25 to-transparent"
         }`}
-      >
+      />
+
+      {/* 2. Floating Crisp Off-White Capsule (NO blur on the capsule itself) */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 pointer-events-none">
+        <header
+          className={`pointer-events-auto w-full max-w-5xl transition-all duration-300 ease-out rounded-full border border-stone-200/90 bg-[#faf9f6] ${
+            scrolled
+              ? "shadow-[0_12px_36px_rgba(0,0,0,0.22),0_1px_2px_rgba(0,0,0,0.06)]"
+              : "shadow-[0_8px_28px_rgba(0,0,0,0.15)]"
+          }`}
+        >
         <div className="flex items-center justify-between px-2 py-1.5 sm:px-4 sm:py-2">
           {/* Logo */}
           <Link
@@ -234,5 +246,6 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
         </div>
       )}
     </div>
+    </>
   );
 }
