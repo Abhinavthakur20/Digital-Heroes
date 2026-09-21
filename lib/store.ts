@@ -216,7 +216,7 @@ export async function getCharities(): Promise<Charity[]> {
         .from("charities")
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           name: String(row.name),
@@ -225,6 +225,7 @@ export async function getCharities(): Promise<Charity[]> {
           impactMetric: String(row.impact_metric ?? row.impactMetric ?? ""),
           imageUrl: String(row.image_url ?? row.imageUrl ?? ""),
           isFeatured: Boolean(row.is_featured ?? row.isFeatured),
+          upcomingEvents: (row.upcoming_events ?? row.upcomingEvents ?? []) as CharityEvent[],
           createdAt: String(row.created_at ?? row.createdAt)
         }));
       }
@@ -260,9 +261,12 @@ export async function createCharity(input: Omit<Charity, "id" | "createdAt">): P
       await supabase.from("charities").insert({
         id: newCharity.id,
         name: newCharity.name,
+        category: newCharity.category,
         description: newCharity.description,
+        impact_metric: newCharity.impactMetric,
         image_url: newCharity.imageUrl,
         is_featured: newCharity.isFeatured,
+        upcoming_events: newCharity.upcomingEvents ?? [],
         created_at: newCharity.createdAt
       });
     }
@@ -292,9 +296,12 @@ export async function updateCharity(
         .from("charities")
         .update({
           name: updates.name,
+          category: updates.category,
           description: updates.description,
+          impact_metric: updates.impactMetric,
           image_url: updates.imageUrl,
-          is_featured: updates.isFeatured
+          is_featured: updates.isFeatured,
+          upcoming_events: updates.upcomingEvents
         })
         .eq("id", id);
     }
@@ -330,7 +337,7 @@ export async function getProfiles(): Promise<Profile[]> {
     const supabase = createServiceSupabaseClient();
     if (supabase) {
       const { data, error } = await supabase.from("profiles").select("*");
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           role: (row.role as "subscriber" | "admin") ?? "subscriber",
@@ -437,6 +444,7 @@ export async function createProfile(input: {
         id: profile.id,
         role: profile.role,
         full_name: profile.fullName,
+        email: profile.email,
         charity_id: profile.charityId,
         charity_pct: profile.charityPct,
         created_at: profile.createdAt
@@ -500,7 +508,7 @@ export async function getSubscriptions(): Promise<Subscription[]> {
     const supabase = createServiceSupabaseClient();
     if (supabase) {
       const { data, error } = await supabase.from("subscriptions").select("*");
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           userId: String(row.user_id ?? row.userId),
@@ -603,7 +611,7 @@ export async function getScores(userId?: string): Promise<Score[]> {
         query = query.eq("user_id", userId).limit(5);
       }
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           userId: String(row.user_id ?? row.userId),
@@ -810,7 +818,7 @@ export async function getDraws(): Promise<Draw[]> {
     const supabase = createServiceSupabaseClient();
     if (supabase) {
       const { data, error } = await supabase.from("draws").select("*").order("month", { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           month: String(row.month),
@@ -905,6 +913,19 @@ export async function publishDraw(input: {
         created_at: drawRecord.createdAt,
         published_at: drawRecord.publishedAt
       });
+      if (simulation.entries.length > 0) {
+        await supabase.from("draw_entries").upsert(
+          simulation.entries.map((entry) => ({
+            id: entry.id,
+            draw_id: drawRecord.id,
+            user_id: entry.userId,
+            numbers: entry.numbers,
+            match_count: entry.matchCount,
+            created_at: entry.createdAt
+          })),
+          { onConflict: "draw_id,user_id" }
+        );
+      }
       if (simulation.winners.length > 0) {
         await supabase.from("winners").insert(
           simulation.winners.map((w) => ({
@@ -913,6 +934,7 @@ export async function publishDraw(input: {
             user_id: w.userId,
             match_tier: w.matchTier,
             amount: w.amount,
+            proof_url: w.proofUrl,
             verification_status: w.verificationStatus,
             payment_status: w.paymentStatus,
             created_at: w.createdAt
@@ -942,7 +964,7 @@ export async function getWinners(userId?: string): Promise<Winner[]> {
         query = query.eq("user_id", userId);
       }
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           drawId: String(row.draw_id ?? row.drawId),
@@ -1069,7 +1091,7 @@ export async function getDrawEntries(userId?: string): Promise<DrawEntry[]> {
         query = query.eq("user_id", userId);
       }
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: Record<string, unknown>) => ({
           id: String(row.id),
           drawId: String(row.draw_id ?? row.drawId),
@@ -1238,11 +1260,46 @@ export async function createDonation(input: {
 
   store.donations.unshift(newDonation);
   saveStoreToFile(store);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      await supabase.from("donations").insert({
+        id: newDonation.id,
+        charity_id: newDonation.charityId,
+        donor_name: newDonation.donorName,
+        donor_email: newDonation.donorEmail,
+        amount: newDonation.amount,
+        created_at: newDonation.createdAt
+      });
+    }
+  }
+
   return newDonation;
 }
 
 export async function getDonations(charityId?: string): Promise<Donation[]> {
   const store = getStore();
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("donations").select("*").order("created_at", { ascending: false });
+      if (charityId) {
+        query = query.eq("charity_id", charityId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data.map((row: Record<string, unknown>) => ({
+          id: String(row.id),
+          charityId: String(row.charity_id),
+          donorName: String(row.donor_name ?? "Anonymous Hero"),
+          donorEmail: String(row.donor_email ?? ""),
+          amount: Number(row.amount),
+          createdAt: String(row.created_at)
+        }));
+      }
+    }
+  }
   if (!store.donations) {
     store.donations = [];
   }

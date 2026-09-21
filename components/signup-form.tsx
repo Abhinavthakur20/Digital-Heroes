@@ -64,7 +64,7 @@ export function SignupForm({ charities }: { charities: Charity[] }) {
         throw new Error(data.error || "Failed to complete signup");
       }
 
-      router.push(data.redirectTo || "/dashboard?checkout=success");
+      router.push(data.redirectTo || `/dashboard?checkout=payment_required&plan=${plan}`);
       router.refresh();
     } catch (err) {
       setError(

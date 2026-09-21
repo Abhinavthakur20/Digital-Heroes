@@ -38,9 +38,12 @@ async function seed() {
     const { error } = await supabase.from("charities").upsert({
       id: charity.id,
       name: charity.name,
+      category: charity.category,
       description: charity.description,
+      impact_metric: charity.impactMetric,
       image_url: charity.imageUrl,
       is_featured: charity.isFeatured,
+      upcoming_events: charity.upcomingEvents || [],
       created_at: charity.createdAt
     });
     if (error) console.warn("Charity upsert error:", error.message);
@@ -53,6 +56,7 @@ async function seed() {
       id: profile.id,
       role: profile.role,
       full_name: profile.fullName,
+      email: profile.email,
       charity_id: profile.charityId,
       charity_pct: profile.charityPct,
       created_at: profile.createdAt
