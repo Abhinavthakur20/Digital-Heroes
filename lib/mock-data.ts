@@ -11,6 +11,22 @@ export const charities: Charity[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=1200&q=80",
     isFeatured: true,
+    upcomingEvents: [
+      {
+        id: "evt-ff-1",
+        title: "Junior Grassroots Open Pro-Am",
+        date: "2026-10-18",
+        location: "St Andrews Eden Course, Fife",
+        description: "18-hole scramble pairing junior academy graduates with amateur supporters. Includes charity putting contest."
+      },
+      {
+        id: "evt-ff-2",
+        title: "NextGen Equipment & Skills Clinic",
+        date: "2026-11-05",
+        location: "Belfry Academy Range, Warwickshire",
+        description: "Free club-fitting and introductory coaching clinic for 60 inner-city youths."
+      }
+    ],
     createdAt: "2026-03-01T10:00:00Z"
   },
   {
@@ -23,6 +39,15 @@ export const charities: Charity[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?auto=format&fit=crop&w=1200&q=80",
     isFeatured: true,
+    upcomingEvents: [
+      {
+        id: "evt-lfr-1",
+        title: "Annual Heroes Adaptive Golf Challenge",
+        date: "2026-10-24",
+        location: "Celtic Manor Resort, Newport",
+        description: "Pairs veteran athletes using SoloRider adaptive carts with tour ambassadors in an inspiring 18-hole Stableford."
+      }
+    ],
     createdAt: "2026-03-02T10:00:00Z"
   },
   {
@@ -35,6 +60,15 @@ export const charities: Charity[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1530028828-25e8270793c5?auto=format&fit=crop&w=1200&q=80",
     isFeatured: false,
+    upcomingEvents: [
+      {
+        id: "evt-gct-1",
+        title: "Eco-Links Tree Planting & Golf Day",
+        date: "2026-11-12",
+        location: "Royal Lytham Dunes, Lancashire",
+        description: "Morning habitat conservation work followed by a 9-hole twilight walking scramble."
+      }
+    ],
     createdAt: "2026-03-03T10:00:00Z"
   },
   {
@@ -47,6 +81,15 @@ export const charities: Charity[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1200&q=80",
     isFeatured: false,
+    upcomingEvents: [
+      {
+        id: "evt-rfr-1",
+        title: "Caddie Care Invitational & Gala Dinner",
+        date: "2026-10-30",
+        location: "Wentworth Club, Surrey",
+        description: "Beneficiary invitational tournament, silent auction, and dinner raising emergency relief reserves."
+      }
+    ],
     createdAt: "2026-03-04T10:00:00Z"
   }
 ];

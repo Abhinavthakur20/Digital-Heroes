@@ -6,6 +6,14 @@ export type DrawStatus = "draft" | "simulated" | "published";
 export type VerificationStatus = "pending" | "approved" | "rejected";
 export type PaymentStatus = "pending" | "paid";
 
+export type CharityEvent = {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  description: string;
+};
+
 export type Charity = {
   id: string;
   name: string;
@@ -14,6 +22,16 @@ export type Charity = {
   impactMetric: string;
   imageUrl: string;
   isFeatured: boolean;
+  upcomingEvents?: CharityEvent[];
+  createdAt: string;
+};
+
+export type Donation = {
+  id: string;
+  charityId: string;
+  donorName: string;
+  donorEmail: string;
+  amount: number;
   createdAt: string;
 };
 

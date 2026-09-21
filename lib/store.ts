@@ -12,6 +12,8 @@ import { simulateDraw } from "./draw-engine";
 import { createServiceSupabaseClient, hasSupabaseConfig } from "./supabase";
 import type {
   Charity,
+  CharityEvent,
+  Donation,
   Draw,
   DrawEntry,
   DrawType,
@@ -32,6 +34,7 @@ interface MemoryStore {
   draws: Draw[];
   drawEntries: DrawEntry[];
   winners: Winner[];
+  donations: Donation[];
   passwords: Map<string, string>; // email -> password
 }
 
@@ -56,6 +59,7 @@ function saveStoreToFile(store: MemoryStore) {
       draws: store.draws,
       drawEntries: store.drawEntries,
       winners: store.winners,
+      donations: store.donations,
       passwords: Array.from(store.passwords.entries())
     };
     fs.writeFileSync(STORE_FILE, JSON.stringify(dataToSave, null, 2), "utf-8");
@@ -70,14 +74,23 @@ function loadStoreFromFile(): MemoryStore | null {
       const content = fs.readFileSync(STORE_FILE, "utf-8").trim();
       if (!content) return null;
       const parsed = JSON.parse(content);
+      const loadedCharities: Charity[] = (parsed.charities || []).map((c: Charity) => {
+        const init = initialCharities.find((ic) => ic.id === c.id);
+        return {
+          ...c,
+          upcomingEvents: c.upcomingEvents || init?.upcomingEvents || []
+        };
+      });
+
       return {
-        charities: parsed.charities || [],
+        charities: loadedCharities.length > 0 ? loadedCharities : JSON.parse(JSON.stringify(initialCharities)),
         profiles: parsed.profiles || [],
         subscriptions: parsed.subscriptions || [],
         scores: parsed.scores || [],
         draws: parsed.draws || [],
         drawEntries: parsed.drawEntries || [],
         winners: parsed.winners || [],
+        donations: parsed.donations || [],
         passwords: new Map(parsed.passwords || [])
       };
     }
@@ -108,6 +121,7 @@ function getStore(): MemoryStore {
         draws: JSON.parse(JSON.stringify(initialDraws)),
         drawEntries: [],
         winners: JSON.parse(JSON.stringify(initialWinners)),
+        donations: [],
         passwords
       };
       saveStoreToFile(globalThis.__digitalHeroesStore);
@@ -577,6 +591,103 @@ export async function addScore(
   return { score: newScore, rollingScores: keptScores };
 }
 
+export async function updateScore(
+  userId: string,
+  scoreId: string,
+  updates: { value?: number; playedOn?: string }
+): Promise<{ score: Score; rollingScores: Score[] }> {
+  const store = getStore();
+  const index = store.scores.findIndex((s) => s.id === scoreId && s.userId === userId);
+  if (index === -1) {
+    throw new Error("Score entry not found or unauthorized.");
+  }
+
+  const current = store.scores[index];
+  const newValue = updates.value !== undefined ? Number(updates.value) : current.value;
+  const newDate = updates.playedOn !== undefined ? String(updates.playedOn).trim() : current.playedOn;
+
+  if (newValue < 1 || newValue > 45) {
+    throw new Error("Stableford score must be between 1 and 45.");
+  }
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(newDate)) {
+    throw new Error("Date must be in YYYY-MM-DD format.");
+  }
+
+  // Enforce unique date against other scores of this user
+  const duplicate = store.scores.some(
+    (s) => s.userId === userId && s.id !== scoreId && s.playedOn === newDate
+  );
+  if (duplicate) {
+    throw new Error("Another round already exists on this date.");
+  }
+
+  current.value = newValue;
+  current.playedOn = newDate;
+
+  // Re-sort and keep rolling-5
+  const userScores = store.scores
+    .filter((s) => s.userId === userId)
+    .sort((a, b) => b.playedOn.localeCompare(a.playedOn));
+
+  const keptScores = userScores.slice(0, 5);
+  const droppedScores = userScores.slice(5);
+  if (droppedScores.length > 0) {
+    const droppedIds = new Set(droppedScores.map((s) => s.id));
+    store.scores = store.scores.filter((s) => !droppedIds.has(s.id));
+  }
+
+  saveStoreToFile(store);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      await supabase
+        .from("scores")
+        .update({ value: newValue, played_on: newDate })
+        .eq("id", scoreId);
+      if (droppedScores.length > 0) {
+        await supabase
+          .from("scores")
+          .delete()
+          .in("id", droppedScores.map((s) => s.id));
+      }
+    }
+  }
+
+  return { score: current, rollingScores: keptScores };
+}
+
+export async function deleteScore(
+  userId: string,
+  scoreId: string
+): Promise<{ success: boolean; rollingScores: Score[] }> {
+  const store = getStore();
+  const index = store.scores.findIndex((s) => s.id === scoreId && s.userId === userId);
+  if (index === -1) {
+    throw new Error("Score entry not found or unauthorized.");
+  }
+
+  store.scores.splice(index, 1);
+
+  const keptScores = store.scores
+    .filter((s) => s.userId === userId)
+    .sort((a, b) => b.playedOn.localeCompare(a.playedOn))
+    .slice(0, 5);
+
+  saveStoreToFile(store);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      await supabase.from("scores").delete().eq("id", scoreId);
+    }
+  }
+
+  return { success: true, rollingScores: keptScores };
+}
+
 // ------------------------------------------------------------
 // Draws & Simulation / Publishing
 // ------------------------------------------------------------
@@ -804,3 +915,75 @@ export async function updateWinnerStatus(
 
   return winner;
 }
+
+// ------------------------------------------------------------
+// Draw Entries
+// ------------------------------------------------------------
+export async function getDrawEntries(userId?: string): Promise<DrawEntry[]> {
+  const store = getStore();
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("draw_entries").select("*").order("created_at", { ascending: false });
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data.map((row: Record<string, unknown>) => ({
+          id: String(row.id),
+          drawId: String(row.draw_id ?? row.drawId),
+          userId: String(row.user_id ?? row.userId),
+          numbers: (row.numbers ?? []) as number[],
+          matchCount: Number(row.match_count ?? row.matchCount ?? 0),
+          createdAt: String(row.created_at ?? row.createdAt)
+        }));
+      }
+    }
+  }
+
+  if (userId) {
+    return store.drawEntries.filter((e) => e.userId === userId);
+  }
+  return store.drawEntries;
+}
+
+// ------------------------------------------------------------
+// Independent Charity Donations
+// ------------------------------------------------------------
+export async function createDonation(input: {
+  charityId: string;
+  donorName: string;
+  donorEmail: string;
+  amount: number;
+}): Promise<Donation> {
+  const store = getStore();
+  if (!store.donations) {
+    store.donations = [];
+  }
+
+  const newDonation: Donation = {
+    id: `don-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    charityId: input.charityId,
+    donorName: input.donorName.trim() || "Anonymous Hero",
+    donorEmail: input.donorEmail.trim(),
+    amount: Number(input.amount),
+    createdAt: new Date().toISOString()
+  };
+
+  store.donations.unshift(newDonation);
+  saveStoreToFile(store);
+  return newDonation;
+}
+
+export async function getDonations(charityId?: string): Promise<Donation[]> {
+  const store = getStore();
+  if (!store.donations) {
+    store.donations = [];
+  }
+  if (charityId) {
+    return store.donations.filter((d) => d.charityId === charityId);
+  }
+  return store.donations;
+}
+
