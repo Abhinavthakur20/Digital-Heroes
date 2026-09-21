@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { AlertCircle, CalendarDays, HeartHandshake, History, ShieldCheck, Trophy } from "lucide-react";
+import { AlertCircle, Calendar, CalendarDays, HeartHandshake, History, ShieldCheck, Trophy } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusPill } from "@/components/status-pill";
 import { UserPrizeActivity } from "@/components/user-prize-activity";
+import { UserParticipationSummary } from "@/components/user-participation-summary";
 import { DemoSubscriptionToggle } from "@/components/demo-subscription-toggle";
 import { RazorpayButton } from "@/components/razorpay-button";
 import { getCurrentUser } from "@/lib/auth";
-import { getCharity, getScores, getSubscription, getWinners } from "@/lib/store";
+import { getCharity, getDrawEntries, getDraws, getScores, getSubscription, getSubscriptions, getWinners } from "@/lib/store";
 import { money, percent, shortDate } from "@/lib/format";
-import { isActiveSubscription } from "@/lib/subscription";
+import { activeMonthlyRevenue, isActiveSubscription } from "@/lib/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +17,26 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   const userId = user?.id ?? "user-ava";
 
-  const [charity, subscription, userScores, userWinnings] = await Promise.all([
+  const [charity, subscription, userScores, userWinnings, allSubscriptions, allDraws, userDrawEntries] = await Promise.all([
     user?.charityId ? getCharity(user.charityId) : null,
     getSubscription(userId),
     getScores(userId),
-    getWinners(userId)
+    getWinners(userId),
+    getSubscriptions(),
+    getDraws(),
+    getDrawEntries(userId)
   ]);
 
   const totalWinnings = userWinnings.reduce((sum, winner) => sum + winner.amount, 0);
   const isSubActive = isActiveSubscription(subscription ?? undefined);
+
+  // Calculate live prize pool estimation
+  const monthlyRevenue = activeMonthlyRevenue(allSubscriptions);
+  const estimatedPrizePool = Math.round(monthlyRevenue * 0.2); // 20% pool share default
+
+  // Next draw schedule (last day of current month)
+  const now = new Date();
+  const nextDrawDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:pt-32 sm:px-6 lg:px-8 space-y-8">
@@ -48,6 +60,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Header with Subscription Details & Renewal Date */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end border-b border-slate-200/80 pb-6">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-forest">
@@ -72,6 +85,42 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Subscription Lifecycle Banner (§04 & §10) */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-soft">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest/10 text-forest">
+            <Calendar className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Subscription Plan & Renewal Date (§10)
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <strong className="text-sm text-slate-900 capitalize font-bold">
+                {subscription?.plan ?? "Monthly"} Tier
+              </strong>
+              <span className="text-xs text-slate-400">·</span>
+              <span className="text-xs text-slate-600">
+                Renewal Date:{" "}
+                <strong className="text-slate-900 font-mono">
+                  {subscription?.currentPeriodEnd ? shortDate(subscription.currentPeriodEnd) : "End of Billing Cycle"}
+                </strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-slate-500">Real-time status check:</span>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] ${
+            isSubActive ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+          }`}>
+            {isSubActive ? "Verified Active" : "Restricted Access"}
+          </span>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard
           label="Last Round Logged"
@@ -90,6 +139,7 @@ export default async function DashboardPage() {
         />
       </div>
 
+      {/* Rolling 5 + Charity Partner */}
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-soft">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -101,7 +151,7 @@ export default async function DashboardPage() {
               href="/dashboard/scores"
               className="text-xs font-bold text-forest hover:text-forest-800 transition-colors"
             >
-              Log round →
+              Log / Edit rounds →
             </Link>
           </div>
 
@@ -150,6 +200,16 @@ export default async function DashboardPage() {
         </section>
       </div>
 
+      {/* Participation Summary (§10: Upcoming Draws & Draws Entered) */}
+      <UserParticipationSummary
+        upcomingDrawDate={nextDrawDate}
+        estimatedPrizePool={estimatedPrizePool}
+        isSubscribed={isSubActive}
+        drawsEntered={userDrawEntries}
+        publishedDraws={allDraws}
+      />
+
+      {/* Prize Activity & Verification Proofs (§09 & §10) */}
       <UserPrizeActivity initialWinners={userWinnings} />
     </div>
   );
