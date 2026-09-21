@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Edit3, Loader2, Plus, Target, Trash2, X } from "lucide-react";
+import { Edit3, Loader2, Plus, Target, Trash2, X } from "lucide-react";
 import { shortDate } from "@/lib/format";
 import type { Profile, Role, Score, Subscription, SubscriptionStatus } from "@/lib/types";
 

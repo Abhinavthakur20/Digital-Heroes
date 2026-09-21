@@ -13,7 +13,6 @@ export default async function AdminWinnersPage() {
   const totalPrizeLiability = allWinners.reduce((sum, w) => sum + w.amount, 0);
   const pendingProofCount = allWinners.filter((w) => w.verificationStatus === "pending").length;
   const approvedCount = allWinners.filter((w) => w.verificationStatus === "approved").length;
-  const paidCount = allWinners.filter((w) => w.paymentStatus === "paid").length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:pt-32 sm:px-6 lg:px-8 space-y-8">

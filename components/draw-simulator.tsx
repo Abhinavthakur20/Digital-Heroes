@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Dices, Loader2, Rocket, Sparkles } from "lucide-react";
+import { CheckCircle2, Dices, Loader2, Rocket } from "lucide-react";
 import { money } from "@/lib/format";
 import type { DrawType } from "@/lib/types";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Award, Banknote, HeartHandshake, ShieldCheck, Users, Wand2 } from "lucide-react";
+import { Banknote, HeartHandshake, ShieldCheck, Users, Wand2 } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusPill } from "@/components/status-pill";
 import { getCharities, getProfiles, getSubscriptions, getWinners } from "@/lib/store";

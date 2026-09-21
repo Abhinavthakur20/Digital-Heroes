@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, HeartHandshake, Loader2, Pencil, Plus, Star, Trash2, X } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Star, Trash2, X } from "lucide-react";
 import type { Charity, Profile } from "@/lib/types";
 
 export function AdminCharitiesManager({

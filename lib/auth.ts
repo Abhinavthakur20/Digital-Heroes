@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { getProfile, getProfileByEmail, verifyUserPassword } from "./store";
+import { getProfile, verifyUserPassword } from "./store";
 import type { Profile, Role } from "./types";
 
 export const SESSION_COOKIE_NAME = "dh_session";

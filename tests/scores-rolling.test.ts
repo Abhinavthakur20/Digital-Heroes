@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { addScore, getScores } from "@/lib/store";
 
 describe("scores rolling-5 engine", () => {

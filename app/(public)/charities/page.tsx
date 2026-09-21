@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Award, HeartHandshake, Search } from "lucide-react";
+import { ArrowRight, HeartHandshake, Search } from "lucide-react";
 import { getCharities } from "@/lib/store";
 
 export const dynamic = "force-dynamic";

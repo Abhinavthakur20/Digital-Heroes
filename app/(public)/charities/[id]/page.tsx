@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award, Calendar, HeartHandshake, MapPin, Sparkles, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Award, Calendar, HeartHandshake, MapPin, Trophy, Users } from "lucide-react";
 import { getCharities, getCharity, getProfiles } from "@/lib/store";
 import { shortDate } from "@/lib/format";
 import { CharitySupportPanel } from "@/components/charity-support-panel";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Award, BadgeCheck, Check, Clock, DollarSign, FileCheck, Loader2, X } from "lucide-react";
+import { Award, Check, DollarSign, FileCheck, Loader2, X } from "lucide-react";
 import { money } from "@/lib/format";
 import type { Profile, Winner } from "@/lib/types";
 import { StatusPill } from "./status-pill";

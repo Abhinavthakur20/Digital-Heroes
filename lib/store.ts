@@ -43,7 +43,6 @@ interface MemoryStore {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __digitalHeroesStore: MemoryStore | undefined;
 }
 

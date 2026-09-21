@@ -16,6 +16,16 @@ export async function PATCH(
     const charityPct = body.charityPct !== undefined ? Number(body.charityPct) : undefined;
     const subscriptionStatus = body.subscriptionStatus as SubscriptionStatus | undefined;
 
+    if (role && role !== "subscriber" && role !== "admin") {
+      throw new HttpError(400, "Invalid role.");
+    }
+    if (
+      subscriptionStatus &&
+      !["active", "inactive", "cancelled", "lapsed"].includes(subscriptionStatus)
+    ) {
+      throw new HttpError(400, "Invalid subscription status.");
+    }
+
     let updatedProfile = null;
     if (role || charityPct !== undefined) {
       updatedProfile = await updateProfile(id, {
@@ -38,12 +48,3 @@ export async function PATCH(
     return errorResponse(error, "Failed to update user", 400);
   }
 }
-    if (role && role !== "subscriber" && role !== "admin") {
-      throw new HttpError(400, "Invalid role.");
-    }
-    if (
-      subscriptionStatus &&
-      !["active", "inactive", "cancelled", "lapsed"].includes(subscriptionStatus)
-    ) {
-      throw new HttpError(400, "Invalid subscription status.");
-    }

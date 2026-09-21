@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertCircle, Calendar, CalendarDays, HeartHandshake, History, ShieldCheck, Trophy } from "lucide-react";
+import { AlertCircle, Calendar, HeartHandshake } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusPill } from "@/components/status-pill";
 import { UserPrizeActivity } from "@/components/user-prize-activity";
@@ -211,6 +211,7 @@ export default async function DashboardPage() {
         isSubscribed={isSubActive}
         drawsEntered={userDrawEntries}
         publishedDraws={allDraws}
+        currentDate={now.toISOString()}
       />
 
       {/* Prize Activity & Verification Proofs (§09 & §10) */}

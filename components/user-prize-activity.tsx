@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Check, CheckCircle2, DollarSign, FileCheck, Loader2, Trophy, Upload, X } from "lucide-react";
+import { Award, Check, CheckCircle2, DollarSign, Loader2, Trophy, Upload } from "lucide-react";
 import { money } from "@/lib/format";
 import type { Winner } from "@/lib/types";
 

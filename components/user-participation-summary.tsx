@@ -1,6 +1,4 @@
-"use client";
-
-import { Calendar, CheckCircle2, Clock, Sparkles, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, Trophy } from "lucide-react";
 import { money, monthLabel } from "@/lib/format";
 import type { Draw, DrawEntry } from "@/lib/types";
 
@@ -9,17 +7,19 @@ export function UserParticipationSummary({
   estimatedPrizePool,
   isSubscribed,
   drawsEntered,
-  publishedDraws
+  publishedDraws,
+  currentDate
 }: {
   upcomingDrawDate: string;
   estimatedPrizePool: number;
   isSubscribed: boolean;
   drawsEntered: DrawEntry[];
   publishedDraws: Draw[];
+  currentDate: string;
 }) {
-  // Days until upcoming draw
   const target = new Date(upcomingDrawDate).getTime();
-  const diffDays = Math.max(0, Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24)));
+  const current = new Date(currentDate).getTime();
+  const diffDays = Math.max(0, Math.ceil((target - current) / (1000 * 60 * 60 * 24)));
 
   return (
     <section className="space-y-6">
