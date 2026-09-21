@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { HeartHandshake, Sparkles } from "lucide-react";
-import { IndependentDonationModal } from "./independent-donation-modal";
 import type { Charity } from "@/lib/types";
+
+const IndependentDonationModal = dynamic(
+  () => import("./independent-donation-modal").then((m) => m.IndependentDonationModal),
+  { ssr: false }
+);
 
 export function CharitySupportPanel({ charity }: { charity: Charity }) {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -42,11 +47,13 @@ export function CharitySupportPanel({ charity }: { charity: Charity }) {
         </div>
       </div>
 
-      <IndependentDonationModal
-        charity={charity}
-        isOpen={isDonateOpen}
-        onClose={() => setIsDonateOpen(false)}
-      />
+      {isDonateOpen && (
+        <IndependentDonationModal
+          charity={charity}
+          isOpen={isDonateOpen}
+          onClose={() => setIsDonateOpen(false)}
+        />
+      )}
     </>
   );
 }

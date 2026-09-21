@@ -20,9 +20,9 @@ export function HeroVideo({
   );
   const activeCloud = cloudName || "lgkythcq";
 
-  // Cloudinary URLs
-  const videoUrl = `https://res.cloudinary.com/${activeCloud}/video/upload/q_auto,f_auto,ac_none/${cleanId}.mp4`;
-  const posterUrl = `https://res.cloudinary.com/${activeCloud}/video/upload/q_auto,f_auto,so_0/${cleanId}.jpg`;
+  // Cloudinary optimized URLs
+  const videoUrl = `https://res.cloudinary.com/${activeCloud}/video/upload/q_auto:good,f_auto,w_1920,c_limit,ac_none/${cleanId}.mp4`;
+  const posterUrl = `https://res.cloudinary.com/${activeCloud}/video/upload/q_auto:good,f_auto,w_1920,c_limit,so_0/${cleanId}.jpg`;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -42,7 +42,7 @@ export function HeroVideo({
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none select-none bg-obsidian-950">
-      {/* 1. Fast loading poster image fallback */}
+      {/* 1. Fast loading prioritized poster image fallback */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={posterUrl}
@@ -50,6 +50,8 @@ export function HeroVideo({
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover object-center"
         loading="eager"
+        fetchPriority="high"
+        decoding="async"
       />
 
       {/* 2. Direct HTML5 video with src & poster */}
@@ -61,7 +63,7 @@ export function HeroVideo({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         className="absolute inset-0 h-full w-full object-cover object-center"
       />
     </div>

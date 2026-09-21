@@ -43,13 +43,32 @@ declare global {
   var __digitalHeroesStore: MemoryStore | undefined;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const STORE_FILE = path.join(DATA_DIR, "store.json");
+// Secondary index caches for ultra-fast O(1) query performance
+let _profileByIdMap: Map<string, Profile> | null = null;
+let _profileByEmailMap: Map<string, Profile> | null = null;
+let _subByUserIdMap: Map<string, Subscription> | null = null;
+let _scoresByUserIdMap: Map<string, Score[]> | null = null;
 
-function saveStoreToFile(store: MemoryStore) {
+export function invalidateStoreIndices() {
+  _profileByIdMap = null;
+  _profileByEmailMap = null;
+  _subByUserIdMap = null;
+  _scoresByUserIdMap = null;
+}
+
+let saveDebounceTimer: NodeJS.Timeout | null = null;
+let isWriting = false;
+let pendingWrite = false;
+
+async function writeStoreAtomic(store: MemoryStore) {
+  if (isWriting) {
+    pendingWrite = true;
+    return;
+  }
+  isWriting = true;
   try {
     if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      await fs.promises.mkdir(DATA_DIR, { recursive: true });
     }
     const dataToSave = {
       charities: store.charities,
@@ -62,10 +81,30 @@ function saveStoreToFile(store: MemoryStore) {
       donations: store.donations,
       passwords: Array.from(store.passwords.entries())
     };
-    fs.writeFileSync(STORE_FILE, JSON.stringify(dataToSave, null, 2), "utf-8");
+    const json = JSON.stringify(dataToSave);
+    const tempFile = `${STORE_FILE}.tmp.${Date.now()}`;
+    await fs.promises.writeFile(tempFile, json, "utf-8");
+    await fs.promises.rename(tempFile, STORE_FILE);
   } catch (err) {
     console.error("Warning: Failed to persist store to file:", err);
+  } finally {
+    isWriting = false;
+    if (pendingWrite) {
+      pendingWrite = false;
+      writeStoreAtomic(store);
+    }
   }
+}
+
+function saveStoreToFile(store: MemoryStore) {
+  invalidateStoreIndices();
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer);
+  }
+  // Coalesce rapid consecutive writes with a 25ms debounce
+  saveDebounceTimer = setTimeout(() => {
+    writeStoreAtomic(store);
+  }, 25);
 }
 
 function loadStoreFromFile(): MemoryStore | null {
@@ -274,12 +313,24 @@ export async function getProfiles(): Promise<Profile[]> {
 
 export async function getProfile(id: string): Promise<Profile | null> {
   const profiles = await getProfiles();
-  return profiles.find((p) => p.id === id) ?? null;
+  if (!_profileByIdMap) {
+    _profileByIdMap = new Map();
+    for (const p of profiles) {
+      _profileByIdMap.set(p.id, p);
+    }
+  }
+  return _profileByIdMap.get(id) ?? null;
 }
 
 export async function getProfileByEmail(email: string): Promise<Profile | null> {
   const profiles = await getProfiles();
-  return profiles.find((p) => p.email.toLowerCase() === email.toLowerCase()) ?? null;
+  if (!_profileByEmailMap) {
+    _profileByEmailMap = new Map();
+    for (const p of profiles) {
+      _profileByEmailMap.set(p.email.toLowerCase(), p);
+    }
+  }
+  return _profileByEmailMap.get(email.toLowerCase()) ?? null;
 }
 
 export async function verifyUserPassword(email: string, password: string): Promise<Profile | null> {
@@ -433,7 +484,13 @@ export async function getSubscriptions(): Promise<Subscription[]> {
 
 export async function getSubscription(userId: string): Promise<Subscription | null> {
   const subs = await getSubscriptions();
-  return subs.find((s) => s.userId === userId) ?? null;
+  if (!_subByUserIdMap) {
+    _subByUserIdMap = new Map();
+    for (const s of subs) {
+      _subByUserIdMap.set(s.userId, s);
+    }
+  }
+  return _subByUserIdMap.get(userId) ?? null;
 }
 
 export async function updateSubscriptionStatus(
@@ -514,8 +571,19 @@ export async function getScores(userId?: string): Promise<Score[]> {
   }
 
   if (userId) {
-    return store.scores
-      .filter((s) => s.userId === userId)
+    if (!_scoresByUserIdMap) {
+      _scoresByUserIdMap = new Map();
+      for (const s of store.scores) {
+        const list = _scoresByUserIdMap.get(s.userId);
+        if (list) {
+          list.push(s);
+        } else {
+          _scoresByUserIdMap.set(s.userId, [s]);
+        }
+      }
+    }
+    const userScores = _scoresByUserIdMap.get(userId) ?? [];
+    return [...userScores]
       .sort((a, b) => b.playedOn.localeCompare(a.playedOn))
       .slice(0, 5);
   }

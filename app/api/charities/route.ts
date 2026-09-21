@@ -4,7 +4,14 @@ import { createCharity, getCharities } from "@/lib/store";
 export async function GET() {
   try {
     const charities = await getCharities();
-    return NextResponse.json({ charities });
+    return NextResponse.json(
+      { charities },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300"
+        }
+      }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch charities" },

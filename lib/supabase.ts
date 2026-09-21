@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey =
@@ -9,22 +9,29 @@ export function hasSupabaseConfig() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
-export function createBrowserSupabaseClient() {
+let _browserClient: SupabaseClient | null = null;
+let _serviceClient: SupabaseClient | null = null;
+
+export function createBrowserSupabaseClient(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseAnonKey) {
     return null;
   }
-
-  return createClient(supabaseUrl, supabaseAnonKey);
+  if (!_browserClient) {
+    _browserClient = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _browserClient;
 }
 
-export function createServiceSupabaseClient() {
+export function createServiceSupabaseClient(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseServiceKey) {
     return null;
   }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false
-    }
-  });
+  if (!_serviceClient) {
+    _serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false
+      }
+    });
+  }
+  return _serviceClient;
 }
