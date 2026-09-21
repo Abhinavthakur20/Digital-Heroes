@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award, CheckCircle, HeartHandshake, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Award, Calendar, HeartHandshake, MapPin, Sparkles, Trophy, Users } from "lucide-react";
 import { getCharities, getCharity, getProfiles } from "@/lib/store";
+import { shortDate } from "@/lib/format";
+import { CharitySupportPanel } from "@/components/charity-support-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,8 @@ export default async function CharityProfilePage({
     supporters.length > 0
       ? supporters.reduce((total, profile) => total + profile.charityPct, 0) / supporters.length
       : 10;
+
+  const events = charity.upcomingEvents || [];
 
   return (
     <div className="pb-20 space-y-12">
@@ -106,27 +110,67 @@ export default async function CharityProfilePage({
         </article>
       </section>
 
-      {/* Support Box */}
+      {/* Upcoming Events / Golf Days Section (§08.2) */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-soft flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex gap-4">
-            <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-forest/10 text-forest">
-              <HeartHandshake className="h-6 w-6" />
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-soft space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-forest" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Upcoming Golf Days & Charity Events</h2>
+                <p className="text-xs text-slate-500">Participate, compete, and meet fellow changemakers on the course</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Back {charity.name} with your membership</h2>
-              <p className="mt-1 max-w-xl text-xs sm:text-sm text-slate-600 leading-relaxed">
-                When you create an account, you can direct 10% to 60% of your monthly membership fee straight to {charity.name} while retaining full eligibility for monthly prize draws.
-              </p>
-            </div>
+            <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-bold text-forest">
+              {events.length} Scheduled
+            </span>
           </div>
-          <Link
-            href="/signup"
-            className="focus-ring inline-flex h-11 items-center justify-center rounded-lg bg-forest px-6 text-xs font-bold text-white hover:bg-forest-800 transition-colors shadow-soft flex-none"
-          >
-            Designate This Partner
-          </Link>
+
+          {events.length === 0 ? (
+            <p className="py-6 text-center text-xs text-slate-400">
+              No upcoming golf days scheduled at this time. Check back soon for seasonal tournament announcements!
+            </p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {events.map((evt) => (
+                <article
+                  key={evt.id}
+                  className="group flex flex-col justify-between rounded-xl border border-slate-200/70 bg-slate-50/50 p-5 hover:border-forest/30 hover:bg-white hover:shadow-card transition-all duration-200"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-forest/10 px-2.5 py-1 text-[11px] font-bold text-forest">
+                        <Calendar className="h-3 w-3" />
+                        {shortDate(evt.date)}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                        <MapPin className="h-3 w-3 text-slate-400" />
+                        {evt.location}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-forest transition-colors">
+                      {evt.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {evt.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/50 flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-semibold text-emerald-700">Official Sanctioned Event</span>
+                    <span className="font-bold text-forest">Registration Open →</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
+      </section>
+
+      {/* Support Box with Independent Donation Modal */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <CharitySupportPanel charity={charity} />
       </section>
     </div>
   );
