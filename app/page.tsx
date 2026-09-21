@@ -47,10 +47,6 @@ export default async function HomePage() {
         {/* Background video */}
         <HeroVideo />
 
-        {/* Minimal overlay — only subtle edge fades */}
-        <div className="absolute inset-0 bg-gradient-to-b from-obsidian-950/30 via-transparent to-obsidian-950/60" />
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian-950/40 via-transparent to-transparent" />
-
         {/* Hero content */}
         <div className="relative mx-auto flex min-h-[700px] lg:min-h-[780px] max-w-7xl items-center px-4 py-24 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-8">
