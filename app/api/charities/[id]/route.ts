@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { deleteCharity, updateCharity } from "@/lib/store";
+import { errorResponse, requireAdmin } from "@/lib/access";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin();
     const { id } = await params;
     const body = await request.json();
 
@@ -24,10 +26,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, charity: updated });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update charity" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to update charity", 400);
   }
 }
 
@@ -36,6 +35,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin();
     const { id } = await params;
     const deleted = await deleteCharity(id);
 
@@ -45,9 +45,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Charity deleted successfully." });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete charity" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to delete charity", 400);
   }
 }

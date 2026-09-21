@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { publishDraw } from "@/lib/store";
+import { errorResponse, requireAdmin } from "@/lib/access";
 import type { DrawType } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin();
     const body = (await request.json().catch(() => ({}))) as {
       month?: string;
       drawType?: DrawType;
@@ -41,9 +43,6 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Publishing draw failed" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Publishing draw failed");
   }
 }

@@ -1,12 +1,16 @@
 import { ScoreForm } from "@/components/score-form";
 import { getCurrentUser } from "@/lib/auth";
 import { getScores } from "@/lib/store";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function ScoresPage() {
   const user = await getCurrentUser();
-  const userId = user?.id ?? "user-ava";
+  if (!user) {
+    redirect("/login?error=login_required&from=/dashboard/scores");
+  }
+  const userId = user.id;
   const userScores = await getScores(userId);
 
   return (
@@ -19,7 +23,7 @@ export default async function ScoresPage() {
           </p>
         </div>
         <div className="rounded-md border border-ink/15 bg-white px-3 py-1.5 text-xs font-medium text-ink/70">
-          User: <strong className="text-ink">{user?.fullName ?? "Ava Mitchell"}</strong>
+          User: <strong className="text-ink">{user.fullName}</strong>
         </div>
       </div>
 

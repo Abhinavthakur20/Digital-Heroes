@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { getProfiles, getWinners } from "@/lib/store";
+import { assertSelfOrAdmin, errorResponse, requireUser } from "@/lib/access";
 
 export async function GET(request: Request) {
   try {
+    const user = await requireUser();
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId") || undefined;
+    const requestedUserId = url.searchParams.get("userId") || undefined;
+    const userId = requestedUserId || (user.role === "admin" ? undefined : user.id);
+    if (requestedUserId) {
+      assertSelfOrAdmin(user, requestedUserId);
+    }
 
     const [winners, profiles] = await Promise.all([
       getWinners(userId),
@@ -18,9 +24,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ winners: enriched });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch winners" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to fetch winners");
   }
 }

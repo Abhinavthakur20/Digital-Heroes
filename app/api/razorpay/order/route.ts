@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { getCurrentUser } from "@/lib/auth";
+import { errorResponse, requireUser } from "@/lib/access";
+import { createPaymentRecord } from "@/lib/store";
 
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Please log in to continue." }, { status: 401 });
-    }
+    const user = await requireUser();
 
     const body = await request.json().catch(() => ({}));
     const plan = body.plan === "yearly" ? "yearly" : "monthly";
@@ -41,6 +39,16 @@ export async function POST(request: Request) {
       }
     });
 
+    await createPaymentRecord({
+      userId: user.id,
+      provider: "razorpay",
+      providerOrderId: order.id,
+      plan,
+      amount: Number(order.amount),
+      currency: String(order.currency || "INR"),
+      status: "pending"
+    });
+
     return NextResponse.json({
       orderId: order.id,
       amount: order.amount,
@@ -54,9 +62,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Razorpay Order Creation Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create Razorpay order" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to create Razorpay order");
   }
 }

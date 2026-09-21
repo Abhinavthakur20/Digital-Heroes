@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getCurrentUser } from "@/lib/auth";
-import { updateSubscriptionStatus } from "@/lib/store";
+import { errorResponse, requireUser } from "@/lib/access";
+import { createPaymentRecord } from "@/lib/store";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const plan = url.searchParams.get("plan") === "yearly" ? "yearly" : "monthly";
-  const user = await getCurrentUser();
-  const userId = user?.id ?? "user-ava";
-  const email = user?.email;
+  const user = await requireUser().catch(() => null);
+  if (!user) {
+    return NextResponse.redirect(new URL("/login?error=login_required", request.url));
+  }
+  const userId = user.id;
+  const email = user.email;
 
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const priceId =
     plan === "yearly" ? process.env.STRIPE_YEARLY_PRICE_ID : process.env.STRIPE_MONTHLY_PRICE_ID;
 
-  // If no Stripe Secret Key configured yet, simulate instant checkout activation in local persistent store
   if (!secretKey) {
-    if (userId) {
-      await updateSubscriptionStatus(userId, "active", plan);
-    }
-    return NextResponse.redirect(new URL(`/dashboard?checkout=success&mode=local`, request.url));
+    return NextResponse.redirect(new URL(`/dashboard?checkout=unconfigured&plan=${plan}`, request.url));
   }
 
   try {
@@ -53,6 +52,16 @@ export async function GET(request: Request) {
       cancel_url: new URL("/dashboard?checkout=cancelled", request.url).toString()
     });
 
+    await createPaymentRecord({
+      userId,
+      provider: "stripe",
+      providerOrderId: session.id,
+      plan,
+      amount: plan === "yearly" ? 20000 : 2000,
+      currency: "USD",
+      status: "pending"
+    });
+
     if (!session.url) {
       return NextResponse.json({ error: "Stripe did not return a checkout URL." }, { status: 502 });
     }
@@ -60,9 +69,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(session.url);
   } catch (error) {
     console.error("Stripe Checkout Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create Stripe Checkout session" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to create Stripe Checkout session");
   }
 }

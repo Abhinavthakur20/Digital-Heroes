@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { getCurrentUser } from "@/lib/auth";
-import { updateSubscriptionStatus } from "@/lib/store";
+import { errorResponse, HttpError, requireUser } from "@/lib/access";
+import { getPaymentByProviderOrder, updatePaymentRecord, updateSubscriptionStatus } from "@/lib/store";
 
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireUser();
 
     const {
       razorpay_order_id,
@@ -18,12 +15,22 @@ export async function POST(request: Request) {
     } = await request.json();
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json({ error: "Missing payment verification parameters" }, { status: 400 });
+      throw new HttpError(400, "Missing payment verification parameters");
     }
 
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keySecret) {
-      return NextResponse.json({ error: "Server missing Razorpay secret" }, { status: 500 });
+      throw new HttpError(500, "Server missing Razorpay secret");
+    }
+
+    const payment = await getPaymentByProviderOrder("razorpay", razorpay_order_id);
+    if (!payment || payment.userId !== user.id) {
+      throw new HttpError(403, "Payment order does not belong to this user.");
+    }
+    const verifiedPlan = plan === "yearly" ? "yearly" : "monthly";
+    const expectedAmount = verifiedPlan === "yearly" ? 1600000 : 160000;
+    if (payment.plan !== verifiedPlan || payment.amount !== expectedAmount || payment.currency !== "INR") {
+      throw new HttpError(400, "Payment order details do not match the requested plan.");
     }
 
     // Verify HMAC SHA256 signature
@@ -34,14 +41,15 @@ export async function POST(request: Request) {
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
+      await updatePaymentRecord(payment.id, { status: "failed", providerPaymentId: razorpay_payment_id });
+      throw new HttpError(400, "Invalid payment signature");
     }
 
-    // Payment signature verified! Activate membership in database
+    await updatePaymentRecord(payment.id, { status: "succeeded", providerPaymentId: razorpay_payment_id });
     await updateSubscriptionStatus(
       user.id,
       "active",
-      plan === "yearly" ? "yearly" : "monthly",
+      verifiedPlan,
       razorpay_payment_id, // stored as reference
       razorpay_order_id
     );
@@ -53,9 +61,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Razorpay Verification Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Payment verification failed" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Payment verification failed", 400);
   }
 }

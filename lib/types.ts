@@ -5,6 +5,8 @@ export type DrawType = "random" | "algorithmic";
 export type DrawStatus = "draft" | "simulated" | "published";
 export type VerificationStatus = "pending" | "approved" | "rejected";
 export type PaymentStatus = "pending" | "paid";
+export type PaymentProvider = "stripe" | "razorpay" | "manual";
+export type PaymentRecordStatus = "pending" | "succeeded" | "failed" | "cancelled";
 
 export type CharityEvent = {
   id: string;
@@ -33,6 +35,20 @@ export type Donation = {
   donorEmail: string;
   amount: number;
   createdAt: string;
+};
+
+export type PaymentRecord = {
+  id: string;
+  userId: string;
+  provider: PaymentProvider;
+  providerOrderId?: string;
+  providerPaymentId?: string;
+  plan: Plan;
+  amount: number;
+  currency: string;
+  status: PaymentRecordStatus;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Profile = {
@@ -94,6 +110,10 @@ export type Winner = {
   matchTier: 3 | 4 | 5;
   amount: number;
   proofUrl?: string;
+  proofFileName?: string;
+  proofMimeType?: string;
+  proofSize?: number;
+  proofUploadedAt?: string;
   verificationStatus: VerificationStatus;
   paymentStatus: PaymentStatus;
   createdAt: string;

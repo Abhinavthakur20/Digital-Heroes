@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import {
   charities as initialCharities,
   profiles as initialProfiles,
@@ -17,6 +18,8 @@ import type {
   Draw,
   DrawEntry,
   DrawType,
+  PaymentRecord,
+  PaymentRecordStatus,
   Profile,
   Score,
   Subscription,
@@ -35,6 +38,7 @@ interface MemoryStore {
   drawEntries: DrawEntry[];
   winners: Winner[];
   donations: Donation[];
+  payments: PaymentRecord[];
   passwords: Map<string, string>; // email -> password
 }
 
@@ -82,6 +86,7 @@ async function writeStoreAtomic(store: MemoryStore) {
       drawEntries: store.drawEntries,
       winners: store.winners,
       donations: store.donations,
+      payments: store.payments,
       passwords: Array.from(store.passwords.entries())
     };
     const json = JSON.stringify(dataToSave);
@@ -133,6 +138,7 @@ function loadStoreFromFile(): MemoryStore | null {
         drawEntries: parsed.drawEntries || [],
         winners: parsed.winners || [],
         donations: parsed.donations || [],
+        payments: parsed.payments || [],
         passwords: new Map(parsed.passwords || [])
       };
     }
@@ -164,12 +170,38 @@ function getStore(): MemoryStore {
         drawEntries: [],
         winners: JSON.parse(JSON.stringify(initialWinners)),
         donations: [],
+        payments: [],
         passwords
       };
       saveStoreToFile(globalThis.__digitalHeroesStore);
     }
   }
   return globalThis.__digitalHeroesStore;
+}
+
+function hashPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString("base64url");
+  const hash = crypto.pbkdf2Sync(password, salt, 120000, 32, "sha256").toString("base64url");
+  return `pbkdf2$${salt}$${hash}`;
+}
+
+function verifyPassword(storedPassword: string | undefined, password: string) {
+  if (!storedPassword || !password) return false;
+
+  if (!storedPassword.startsWith("pbkdf2$")) {
+    return storedPassword === password;
+  }
+
+  const [, salt, expected] = storedPassword.split("$");
+  if (!salt || !expected) return false;
+
+  const actual = crypto.pbkdf2Sync(password, salt, 120000, 32, "sha256").toString("base64url");
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+  return (
+    actualBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+  );
 }
 
 // ------------------------------------------------------------
@@ -342,8 +374,7 @@ export async function verifyUserPassword(email: string, password: string): Promi
   if (!profile) return null;
 
   const storedPassword = store.passwords.get(email.toLowerCase());
-  // Accept stored password, or default "password123" for demo accounts
-  if (!storedPassword || storedPassword === password || password === "password123") {
+  if (verifyPassword(storedPassword, password)) {
     return profile;
   }
 
@@ -358,6 +389,7 @@ export async function createProfile(input: {
   role?: "subscriber" | "admin";
   password?: string;
   plan?: "monthly" | "yearly";
+  subscriptionStatus?: SubscriptionStatus;
 }): Promise<{ profile: Profile; subscription: Subscription }> {
   const store = getStore();
   const existing = await getProfileByEmail(input.email);
@@ -388,14 +420,14 @@ export async function createProfile(input: {
     id: `sub-${userId}`,
     userId,
     plan: input.plan ?? "monthly",
-    status: "active",
+    status: input.subscriptionStatus ?? "inactive",
     currentPeriodEnd: currentPeriodEnd.toISOString(),
     createdAt: now.toISOString()
   };
 
   store.profiles.push(profile);
   store.subscriptions.push(subscription);
-  store.passwords.set(input.email.toLowerCase(), input.password || "password123");
+  store.passwords.set(input.email.toLowerCase(), hashPassword(input.password || "password123"));
   saveStoreToFile(store);
 
   if (hasSupabaseConfig()) {
@@ -504,16 +536,26 @@ export async function updateSubscriptionStatus(
   stripeSubscriptionId?: string
 ): Promise<Subscription | null> {
   const store = getStore();
+  const nextPeriodEnd = (targetPlan: "monthly" | "yearly") => {
+    const date = new Date();
+    if (targetPlan === "yearly") {
+      date.setFullYear(date.getFullYear() + 1);
+    } else {
+      date.setMonth(date.getMonth() + 1);
+    }
+    return date.toISOString();
+  };
   let sub = store.subscriptions.find((s) => s.userId === userId);
   if (!sub) {
+    const subPlan = plan ?? "monthly";
     sub = {
       id: `sub-${userId}`,
       userId,
-      plan: plan ?? "monthly",
+      plan: subPlan,
       status,
       stripeCustomerId,
       stripeSubscriptionId,
-      currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString(),
+      currentPeriodEnd: nextPeriodEnd(subPlan),
       createdAt: new Date().toISOString()
     };
     store.subscriptions.push(sub);
@@ -523,7 +565,7 @@ export async function updateSubscriptionStatus(
     if (stripeCustomerId) sub.stripeCustomerId = stripeCustomerId;
     if (stripeSubscriptionId) sub.stripeSubscriptionId = stripeSubscriptionId;
     if (status === "active") {
-      sub.currentPeriodEnd = new Date(Date.now() + 30 * 86400000).toISOString();
+      sub.currentPeriodEnd = nextPeriodEnd(sub.plan);
     }
   }
 
@@ -908,6 +950,10 @@ export async function getWinners(userId?: string): Promise<Winner[]> {
           matchTier: Number(row.match_tier ?? row.matchTier) as 3 | 4 | 5,
           amount: Number(row.amount),
           proofUrl: row.proof_url ? String(row.proof_url) : undefined,
+          proofFileName: row.proof_file_name ? String(row.proof_file_name) : undefined,
+          proofMimeType: row.proof_mime_type ? String(row.proof_mime_type) : undefined,
+          proofSize: row.proof_size ? Number(row.proof_size) : undefined,
+          proofUploadedAt: row.proof_uploaded_at ? String(row.proof_uploaded_at) : undefined,
           verificationStatus: (row.verification_status ?? row.verificationStatus) as VerificationStatus,
           paymentStatus: (row.payment_status ?? row.paymentStatus) as PaymentStatus,
           createdAt: String(row.created_at ?? row.createdAt)
@@ -923,11 +969,27 @@ export async function getWinners(userId?: string): Promise<Winner[]> {
 }
 
 export async function uploadWinnerProof(winnerId: string, proofUrl: string): Promise<Winner | null> {
+  return uploadWinnerProofDetails(winnerId, { proofUrl });
+}
+
+export async function uploadWinnerProofDetails(
+  winnerId: string,
+  input: {
+    proofUrl: string;
+    proofFileName?: string;
+    proofMimeType?: string;
+    proofSize?: number;
+  }
+): Promise<Winner | null> {
   const store = getStore();
   const winner = store.winners.find((w) => w.id === winnerId);
   if (!winner) return null;
 
-  winner.proofUrl = proofUrl;
+  winner.proofUrl = input.proofUrl;
+  winner.proofFileName = input.proofFileName;
+  winner.proofMimeType = input.proofMimeType;
+  winner.proofSize = input.proofSize;
+  winner.proofUploadedAt = new Date().toISOString();
   winner.verificationStatus = "pending";
   saveStoreToFile(store);
 
@@ -936,7 +998,14 @@ export async function uploadWinnerProof(winnerId: string, proofUrl: string): Pro
     if (supabase) {
       await supabase
         .from("winners")
-        .update({ proof_url: proofUrl, verification_status: "pending" })
+        .update({
+          proof_url: input.proofUrl,
+          proof_file_name: input.proofFileName,
+          proof_mime_type: input.proofMimeType,
+          proof_size: input.proofSize,
+          proof_uploaded_at: winner.proofUploadedAt,
+          verification_status: "pending"
+        })
         .eq("id", winnerId);
     }
   }
@@ -1020,6 +1089,131 @@ export async function getDrawEntries(userId?: string): Promise<DrawEntry[]> {
 }
 
 // ------------------------------------------------------------
+// Payments
+// ------------------------------------------------------------
+export async function createPaymentRecord(input: {
+  userId: string;
+  provider: "stripe" | "razorpay" | "manual";
+  providerOrderId?: string;
+  providerPaymentId?: string;
+  plan: "monthly" | "yearly";
+  amount: number;
+  currency: string;
+  status?: PaymentRecordStatus;
+}): Promise<PaymentRecord> {
+  const store = getStore();
+  if (!store.payments) {
+    store.payments = [];
+  }
+
+  const now = new Date().toISOString();
+  const record: PaymentRecord = {
+    id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    userId: input.userId,
+    provider: input.provider,
+    providerOrderId: input.providerOrderId,
+    providerPaymentId: input.providerPaymentId,
+    plan: input.plan,
+    amount: Number(input.amount),
+    currency: input.currency,
+    status: input.status ?? "pending",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  store.payments.unshift(record);
+  saveStoreToFile(store);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      await supabase.from("payments").insert({
+        id: record.id,
+        user_id: record.userId,
+        provider: record.provider,
+        provider_order_id: record.providerOrderId,
+        provider_payment_id: record.providerPaymentId,
+        plan: record.plan,
+        amount: record.amount,
+        currency: record.currency,
+        status: record.status,
+        created_at: record.createdAt,
+        updated_at: record.updatedAt
+      });
+    }
+  }
+
+  return record;
+}
+
+export async function getPaymentByProviderOrder(
+  provider: "stripe" | "razorpay" | "manual",
+  providerOrderId: string
+): Promise<PaymentRecord | null> {
+  const store = getStore();
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("provider", provider)
+        .eq("provider_order_id", providerOrderId)
+        .maybeSingle();
+      if (!error && data) {
+        return {
+          id: String(data.id),
+          userId: String(data.user_id),
+          provider: data.provider as "stripe" | "razorpay" | "manual",
+          providerOrderId: data.provider_order_id ? String(data.provider_order_id) : undefined,
+          providerPaymentId: data.provider_payment_id ? String(data.provider_payment_id) : undefined,
+          plan: data.plan as "monthly" | "yearly",
+          amount: Number(data.amount),
+          currency: String(data.currency),
+          status: data.status as PaymentRecordStatus,
+          createdAt: String(data.created_at),
+          updatedAt: String(data.updated_at)
+        };
+      }
+    }
+  }
+  return (store.payments || []).find((p) => p.provider === provider && p.providerOrderId === providerOrderId) ?? null;
+}
+
+export async function updatePaymentRecord(
+  id: string,
+  updates: {
+    status?: PaymentRecordStatus;
+    providerPaymentId?: string;
+  }
+): Promise<PaymentRecord | null> {
+  const store = getStore();
+  const payment = (store.payments || []).find((p) => p.id === id);
+  if (!payment) return null;
+
+  if (updates.status) payment.status = updates.status;
+  if (updates.providerPaymentId) payment.providerPaymentId = updates.providerPaymentId;
+  payment.updatedAt = new Date().toISOString();
+  saveStoreToFile(store);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createServiceSupabaseClient();
+    if (supabase) {
+      await supabase
+        .from("payments")
+        .update({
+          status: payment.status,
+          provider_payment_id: payment.providerPaymentId,
+          updated_at: payment.updatedAt
+        })
+        .eq("id", id);
+    }
+  }
+
+  return payment;
+}
+
+// ------------------------------------------------------------
 // Independent Charity Donations
 // ------------------------------------------------------------
 export async function createDonation(input: {
@@ -1057,4 +1251,3 @@ export async function getDonations(charityId?: string): Promise<Donation[]> {
   }
   return store.donations;
 }
-

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { updateSubscriptionStatus } from "@/lib/store";
+import { getPaymentByProviderOrder, updatePaymentRecord, updateSubscriptionStatus } from "@/lib/store";
 
 export async function POST(request: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -33,6 +33,13 @@ export async function POST(request: Request) {
       const subscriptionId = typeof session.subscription === "string" ? session.subscription : undefined;
 
       if (userId) {
+        const payment = await getPaymentByProviderOrder("stripe", session.id);
+        if (payment) {
+          await updatePaymentRecord(payment.id, {
+            status: "succeeded",
+            providerPaymentId: subscriptionId || session.id
+          });
+        }
         await updateSubscriptionStatus(userId, "active", plan, customerId, subscriptionId);
       }
     } else if (event.type === "customer.subscription.updated") {

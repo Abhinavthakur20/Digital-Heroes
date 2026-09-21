@@ -5,7 +5,7 @@ import { getSubscription } from "@/lib/store";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ error: "Authentication required.", user: null }, { status: 401 });
   }
 
   const subscription = await getSubscription(user.id);

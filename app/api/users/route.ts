@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getProfiles, getSubscriptions } from "@/lib/store";
+import { errorResponse, requireAdmin } from "@/lib/access";
 
 export async function GET() {
   try {
+    await requireAdmin();
     const [profiles, subscriptions] = await Promise.all([
       getProfiles(),
       getSubscriptions()
@@ -15,9 +17,6 @@ export async function GET() {
 
     return NextResponse.json({ users });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch users" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to fetch users");
   }
 }

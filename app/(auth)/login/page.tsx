@@ -74,6 +74,8 @@ function LoginFormContent() {
   const [error, setError] = useState(
     errorParam === "admin_required"
       ? "Administrator credentials are required to access that area."
+      : errorParam === "login_required"
+      ? "Please sign in to continue."
       : ""
   );
 

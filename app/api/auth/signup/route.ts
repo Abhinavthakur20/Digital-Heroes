@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       charityId,
       charityPct,
       role: "subscriber",
-      plan
+      plan,
+      subscriptionStatus: "inactive"
     });
 
     const sessionData = {
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       success: true,
       user: sessionData,
       subscription,
-      redirectTo: "/dashboard?checkout=success"
+      redirectTo: `/dashboard?checkout=payment_required&plan=${plan}`
     });
 
     response.cookies.set({
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 

@@ -264,14 +264,14 @@ export function SignupForm({ charities }: { charities: Charity[] }) {
           ) : (
             <>
               <CreditCard className="h-4 w-4" />
-              Create Account & Start Playing
+              Create Account & Continue to Payment
               <ArrowRight className="h-4 w-4" />
             </>
           )}
         </button>
 
         <p className="mt-3 text-center text-[11px] text-slate-400">
-          Encrypted registration · Demo accounts are instantly activated
+          Encrypted registration · Membership activates after verified payment
         </p>
       </section>
     </form>

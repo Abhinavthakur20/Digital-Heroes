@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AlertCircle, Calendar, CalendarDays, HeartHandshake, History, ShieldCheck, Trophy } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusPill } from "@/components/status-pill";
@@ -15,7 +16,10 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  const userId = user?.id ?? "user-ava";
+  if (!user) {
+    redirect("/login?error=login_required&from=/dashboard");
+  }
+  const userId = user.id;
 
   const [charity, subscription, userScores, userWinnings, allSubscriptions, allDraws, userDrawEntries] = await Promise.all([
     user?.charityId ? getCharity(user.charityId) : null,
@@ -49,7 +53,7 @@ export default async function DashboardPage() {
               Subscription Status: {subscription?.status === "lapsed" ? "Lapsed (Payment Past Due)" : "Inactive"}
             </h3>
             <p className="mt-1 leading-relaxed text-amber-800">
-              Your subscription is currently {subscription?.status || "inactive"}. Past golf rounds and giving records are safe, but monthly draw ticket issuance is paused until membership renewal.
+              Your subscription is currently {subscription?.status || "inactive"}. Past golf rounds and giving records are safe, but score entry and monthly draw ticket issuance are paused until verified payment or renewal.
             </p>
           </div>
           <RazorpayButton
@@ -70,7 +74,7 @@ export default async function DashboardPage() {
             Subscriber Dashboard
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Welcome back, <strong className="text-slate-900">{user?.fullName ?? "Golfer"}</strong>. Track your scoring vector and charitable impact.
+          Welcome back, <strong className="text-slate-900">{user.fullName}</strong>. Track your scoring vector and charitable impact.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -134,7 +138,7 @@ export default async function DashboardPage() {
         />
         <KpiCard
           label="Giving Allocation"
-          value={percent(user?.charityPct ?? 10)}
+          value={percent(user.charityPct)}
           detail={charity?.name ?? "Designated Partner"}
         />
       </div>

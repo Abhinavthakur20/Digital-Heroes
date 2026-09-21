@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getDraws, getProfiles, getScores, getSubscriptions } from "@/lib/store";
 import { simulateDraw } from "@/lib/draw-engine";
+import { errorResponse, requireAdmin } from "@/lib/access";
 import type { DrawType } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin();
     const body = (await request.json().catch(() => ({}))) as {
       month?: string;
       drawType?: DrawType;
@@ -43,9 +45,6 @@ export async function POST(request: Request) {
       result
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Simulation failed" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Simulation failed");
   }
 }

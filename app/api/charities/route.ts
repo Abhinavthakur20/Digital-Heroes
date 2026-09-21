@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCharity, getCharities } from "@/lib/store";
+import { errorResponse, requireAdmin } from "@/lib/access";
 
 export async function GET() {
   try {
@@ -22,6 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin();
     const body = await request.json();
     const name = String(body.name || "").trim();
     const category = String(body.category || "General").trim();
@@ -50,9 +52,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, charity: newCharity });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create charity" },
-      { status: 500 }
-    );
+    return errorResponse(error, "Failed to create charity", 400);
   }
 }
