@@ -43,6 +43,9 @@ declare global {
   var __digitalHeroesStore: MemoryStore | undefined;
 }
 
+const DATA_DIR = path.join(process.cwd(), "data");
+const STORE_FILE = path.join(DATA_DIR, "store.json");
+
 // Secondary index caches for ultra-fast O(1) query performance
 let _profileByIdMap: Map<string, Profile> | null = null;
 let _profileByEmailMap: Map<string, Profile> | null = null;
