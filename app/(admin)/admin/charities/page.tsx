@@ -10,7 +10,7 @@ export default async function AdminCharitiesPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:pt-32 sm:px-6 lg:px-8">
       <AdminCharitiesManager initialCharities={charities} profiles={profiles} />
     </div>
   );

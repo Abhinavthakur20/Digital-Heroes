@@ -47,8 +47,8 @@ export default async function HomePage() {
         {/* Background video */}
         <HeroVideo />
 
-        {/* Hero content */}
-        <div className="relative mx-auto flex min-h-[700px] lg:min-h-[780px] max-w-7xl items-center px-4 py-24 sm:px-6 lg:px-8">
+        {/* Hero content — generous top padding so top badge sits cleanly below the floating navbar */}
+        <div className="relative mx-auto flex min-h-[720px] lg:min-h-[800px] max-w-7xl flex-col justify-center px-4 pt-32 pb-20 sm:pt-36 lg:pt-40 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-8">
             {/* Status badge */}
             <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-400/30 bg-black/40 px-4 py-1.5 backdrop-blur-xl">

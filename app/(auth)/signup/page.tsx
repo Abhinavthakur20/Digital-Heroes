@@ -7,7 +7,7 @@ export default async function SignupPage() {
   const charities = await getCharities();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 pt-28 pb-16 sm:pt-32 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-4xl font-semibold text-ink">Create Subscriber Account</h1>
         <p className="mt-2 max-w-2xl text-ink/65">

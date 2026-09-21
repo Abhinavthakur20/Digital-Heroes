@@ -24,7 +24,7 @@ export default async function CharitiesPage({
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-10">
+    <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:pt-32 sm:px-6 lg:px-8 space-y-10">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end border-b border-slate-200/80 pb-8">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-forest">
