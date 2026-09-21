@@ -49,10 +49,6 @@ export default async function HomePage() {
         {/* Video background */}
         <HeroVideo />
 
-        {/* Dark cinematic overlays for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian-950/90 via-obsidian-950/50 to-obsidian-950/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950 via-transparent to-obsidian-950/40" />
-
         {/* Hero content */}
         <div className="relative mx-auto flex min-h-[92vh] max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <div className="w-full grid lg:grid-cols-[1fr_380px] gap-12 xl:gap-20 items-center pt-24 pb-16">
@@ -71,7 +67,7 @@ export default async function HomePage() {
               </div>
 
               {/* Headline */}
-              <div className="space-y-3">
+              <div className="space-y-3 drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]">
                 <h1 className="font-display font-extrabold text-5xl tracking-tight text-white sm:text-6xl lg:text-7xl leading-[1.05]">
                   Elevate your
                   <br />
@@ -85,7 +81,7 @@ export default async function HomePage() {
               </div>
 
               {/* Description */}
-              <p className="max-w-lg text-base sm:text-lg leading-relaxed text-white/80">
+              <p className="max-w-lg text-base sm:text-lg leading-relaxed text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                 The only platform that connects competitive Stableford scoring with
                 automated prize draws and{" "}
                 <span className="text-emerald-300 font-semibold">
