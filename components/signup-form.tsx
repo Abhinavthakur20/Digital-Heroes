@@ -99,10 +99,10 @@ export function SignupForm({ charities }: { charities: Charity[] }) {
               Full Name
             </label>
             <div className="relative">
-              <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 required
-                className="premium-input pl-10"
+                className="premium-input !pl-12"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Colin Montgomerie"
@@ -114,11 +114,11 @@ export function SignupForm({ charities }: { charities: Charity[] }) {
               Email Address
             </label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 required
                 type="email"
-                className="premium-input pl-10"
+                className="premium-input !pl-12"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colin@example.com"
@@ -130,10 +130,10 @@ export function SignupForm({ charities }: { charities: Charity[] }) {
               Password
             </label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="password"
-                className="premium-input pl-10"
+                className="premium-input !pl-12"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a secure password"

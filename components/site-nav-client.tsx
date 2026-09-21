@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Award, ChevronRight, LayoutDashboard, LogOut, Menu, ShieldCheck, User, X } from "lucide-react";
 import type { Profile } from "@/lib/types";
 
@@ -11,14 +11,10 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
+  if (pathname === "/login" || pathname === "/signup") {
+    return null;
+  }
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -35,32 +31,17 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
 
   return (
     <>
-      {/* 1. Blurred background strip behind the navbar capsule */}
-      <div
-        aria-hidden="true"
-        className={`fixed top-0 left-0 right-0 h-24 pointer-events-none z-40 transition-all duration-500 backdrop-blur-xl ${
-          scrolled
-            ? "bg-obsidian-950/40"
-            : "bg-gradient-to-b from-obsidian-950/60 via-obsidian-950/25 to-transparent"
-        }`}
-      />
-
-      {/* 2. Floating Crisp Off-White Capsule (NO blur on the capsule itself) */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-50 border-b border-stone-200 bg-[#faf9f6] shadow-sm">
         <header
-          className={`pointer-events-auto w-full max-w-5xl transition-all duration-300 ease-out rounded-full border border-stone-200/90 bg-[#faf9f6] ${
-            scrolled
-              ? "shadow-[0_12px_36px_rgba(0,0,0,0.22),0_1px_2px_rgba(0,0,0,0.06)]"
-              : "shadow-[0_8px_28px_rgba(0,0,0,0.15)]"
-          }`}
+          className="mx-auto w-full max-w-7xl"
         >
-        <div className="flex items-center justify-between px-2 py-1.5 sm:px-4 sm:py-2">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link
             href="/"
-            className="focus-ring flex items-center gap-2.5 rounded-full pl-1 pr-3 py-1 group transition-colors hover:bg-stone-900/[0.04]"
+            className="focus-ring flex items-center gap-2.5 rounded-lg py-1 pr-2 group transition-colors hover:bg-stone-900/[0.04]"
           >
-            <span className="relative flex h-8 w-8 items-center justify-center rounded-full overflow-hidden ring-1 ring-stone-900/10 transition-transform group-hover:scale-105 bg-white shadow-sm">
+            <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-md ring-1 ring-stone-900/10 transition-transform group-hover:scale-105 bg-white shadow-sm">
               <Image
                 src="/images/logo.jpg"
                 alt="Digital Heroes Logo"
@@ -76,16 +57,16 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
           </Link>
 
           {/* Center nav pills */}
-          <nav className="hidden items-center gap-1 rounded-full bg-stone-900/[0.05] p-1 md:flex">
+          <nav className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
               const isActive = pathname.startsWith(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`focus-ring relative rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                  className={`focus-ring relative rounded-md px-4 py-2 text-xs font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-stone-900 text-white shadow-sm"
+                      ? "bg-stone-900 text-white"
                       : "text-stone-600 hover:text-stone-900 hover:bg-stone-900/[0.04]"
                   }`}
                 >
@@ -96,9 +77,9 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
             {isAdmin && (
               <Link
                 href="/admin"
-                className={`focus-ring flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                className={`focus-ring flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition-all duration-200 ${
                   pathname.startsWith("/admin")
-                    ? "bg-emerald-700 text-white shadow-sm"
+                    ? "bg-emerald-700 text-white"
                     : "text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60"
                 }`}
               >
@@ -113,7 +94,7 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
             {user ? (
               <div className="flex items-center gap-2">
                 {/* User pill - desktop */}
-                <div className="hidden items-center gap-2.5 rounded-full bg-stone-900/[0.05] pl-3 pr-1 py-1 sm:flex ring-1 ring-stone-900/[0.05]">
+                <div className="hidden items-center gap-2.5 rounded-md bg-stone-900/[0.05] py-1 pl-3 pr-1 sm:flex ring-1 ring-stone-900/[0.05]">
                   <div className="text-right">
                     <p className="text-[11px] font-bold text-stone-900 leading-none">{user.fullName}</p>
                     <span
@@ -128,7 +109,7 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
 
                   <button
                     onClick={handleLogout}
-                    className="focus-ring flex h-7 w-7 items-center justify-center rounded-full bg-stone-900/[0.06] text-stone-600 hover:bg-stone-900/[0.12] hover:text-stone-900 transition-all"
+                    className="focus-ring flex h-7 w-7 items-center justify-center rounded-md bg-stone-900/[0.06] text-stone-600 hover:bg-stone-900/[0.12] hover:text-stone-900 transition-all"
                     title="Logout"
                   >
                     <LogOut className="h-3 w-3" />
@@ -138,7 +119,7 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
                 {/* Mobile user icon */}
                 <Link
                   href="/dashboard"
-                  className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-stone-900/[0.06] text-stone-700 hover:bg-stone-900/[0.1] hover:text-stone-900 sm:hidden transition-colors"
+                  className="focus-ring flex h-8 w-8 items-center justify-center rounded-md bg-stone-900/[0.06] text-stone-700 hover:bg-stone-900/[0.1] hover:text-stone-900 sm:hidden transition-colors"
                   title="Dashboard"
                 >
                   <User className="h-3.5 w-3.5" />
@@ -148,13 +129,13 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
                   href="/login"
-                  className="focus-ring rounded-full px-4 py-1.5 text-xs font-semibold text-stone-700 hover:text-stone-900 hover:bg-stone-900/[0.05] transition-all"
+                  className="focus-ring rounded-md px-4 py-2 text-xs font-semibold text-stone-700 hover:text-stone-900 hover:bg-stone-900/[0.05] transition-all"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/signup"
-                  className="focus-ring group inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-[0_2px_12px_rgba(5,150,105,0.25)] transition-all duration-200 hover:scale-[1.02]"
+                  className="focus-ring group inline-flex items-center gap-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200"
                 >
                   <Award className="h-3 w-3 text-white" />
                   Join
@@ -166,7 +147,7 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-stone-900/[0.06] text-stone-700 hover:bg-stone-900/[0.1] hover:text-stone-900 md:hidden transition-colors"
+              className="focus-ring flex h-8 w-8 items-center justify-center rounded-md bg-stone-900/[0.06] text-stone-700 hover:bg-stone-900/[0.1] hover:text-stone-900 md:hidden transition-colors"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}
@@ -177,7 +158,7 @@ export function SiteNavClient({ user }: { user: Profile | null }) {
 
       {/* Mobile dropdown — positioned below capsule */}
       {mobileOpen && (
-        <div className="pointer-events-auto fixed inset-x-4 top-[76px] z-40 rounded-2xl border border-stone-200/90 bg-[#faf9f6]/95 backdrop-blur-2xl shadow-[0_16px_48px_rgba(0,0,0,0.18)] md:hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed inset-x-4 top-[72px] z-40 rounded-md border border-stone-200 bg-[#faf9f6] shadow-lg md:hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <nav className="p-3 space-y-1">
             {navLinks.map((link) => {
               const isActive = pathname.startsWith(link.href);

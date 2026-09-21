@@ -235,14 +235,14 @@ function LoginFormContent() {
                 Email address
               </label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="login-email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="premium-input pl-10"
+                  className="premium-input !pl-12"
                   placeholder="you@example.com"
                 />
               </div>
@@ -256,14 +256,14 @@ function LoginFormContent() {
                 <span className="text-[11px] text-slate-400 select-none">Demo: password123</span>
               </div>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="login-password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="premium-input pl-10"
+                  className="premium-input !pl-12"
                   placeholder="••••••••"
                 />
               </div>
