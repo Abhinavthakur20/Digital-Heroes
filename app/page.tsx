@@ -3,7 +3,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   Award,
-  CheckCircle,
   HeartHandshake,
   LineChart,
   Shield,
@@ -16,7 +15,6 @@ import { getCharities, getProfiles, getSubscriptions, getWinners } from "@/lib/s
 import { getCurrentUser } from "@/lib/auth";
 import { activeSubscriptions } from "@/lib/subscription";
 import { money } from "@/lib/format";
-import { KpiCard } from "@/components/kpi-card";
 import { HeroVideo } from "@/components/hero-video";
 import { SubscriptionCards } from "@/components/subscription-cards";
 
@@ -43,154 +41,142 @@ export default async function HomePage() {
 
   return (
     <div className="pb-20">
-      {/* ════════════════════════════════════════════════════════════
-          HERO SECTION — Full-bleed cinematic dark with video background
-         ════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[700px] lg:min-h-[780px] overflow-hidden bg-obsidian-950">
-        {/* Background video */}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          HERO — Full-bleed cinematic video background with dark overlays
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-[92vh] overflow-hidden bg-obsidian-950">
+        {/* Video background */}
         <HeroVideo />
 
-        {/* Hero content — generous top padding so top badge sits cleanly below the floating navbar */}
-        <div className="relative mx-auto flex min-h-[720px] lg:min-h-[800px] max-w-7xl flex-col justify-center px-4 pt-32 pb-20 sm:pt-36 lg:pt-40 sm:px-6 lg:px-8">
-          <div className="max-w-3xl space-y-8">
-            {/* Status badge */}
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-400/30 bg-black/40 px-4 py-1.5 backdrop-blur-xl">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              </span>
-              <span className="text-xs font-semibold text-emerald-300 tracking-wide">
-                Live Platform · Monthly Draws · Verified Impact
-              </span>
-            </div>
+        {/* Dark cinematic overlays for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian-950/90 via-obsidian-950/50 to-obsidian-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950 via-transparent to-obsidian-950/40" />
 
-            {/* Headline — Outfit modern display font with white & light green */}
-            <div className="space-y-3">
-              <h1 className="font-display font-extrabold text-5xl tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-8xl leading-[1.05] drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
-                Elevate your
-                <br />
-                <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-teal-200 bg-clip-text text-transparent">
-                  performance.
+        {/* Hero content */}
+        <div className="relative mx-auto flex min-h-[92vh] max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <div className="w-full grid lg:grid-cols-[1fr_380px] gap-12 xl:gap-20 items-center pt-24 pb-16">
+
+            {/* Left — Copy */}
+            <div className="space-y-8 max-w-2xl">
+              {/* Live badge */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-400/30 bg-white/[0.06] px-4 py-1.5 backdrop-blur-xl">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                 </span>
-              </h1>
-              <p className="font-display font-semibold text-2xl sm:text-3xl lg:text-4xl text-emerald-100/90 leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                Back your cause.
+                <span className="text-xs font-semibold text-emerald-300 tracking-wide">
+                  Live Platform · Monthly Draws · Verified Impact
+                </span>
+              </div>
+
+              {/* Headline */}
+              <div className="space-y-3">
+                <h1 className="font-display font-extrabold text-5xl tracking-tight text-white sm:text-6xl lg:text-7xl leading-[1.05]">
+                  Elevate your
+                  <br />
+                  <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-teal-200 bg-clip-text text-transparent">
+                    performance.
+                  </span>
+                </h1>
+                <p className="font-display font-semibold text-2xl sm:text-3xl text-emerald-100/90 leading-tight">
+                  Back your cause.
+                </p>
+              </div>
+
+              {/* Description */}
+              <p className="max-w-lg text-base sm:text-lg leading-relaxed text-white/80">
+                The only platform that connects competitive Stableford scoring with
+                automated prize draws and{" "}
+                <span className="text-emerald-300 font-semibold">
+                  guaranteed charitable giving.
+                </span>
               </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-4">
+                <Link
+                  href="/signup"
+                  className="focus-ring group relative inline-flex h-12 items-center justify-center gap-2.5 rounded-xl bg-emerald-400 px-7 text-sm font-bold text-obsidian-950 shadow-[0_0_30px_rgba(52,211,153,0.3)] transition-all duration-300 hover:bg-emerald-300 hover:shadow-[0_0_45px_rgba(52,211,153,0.5)] hover:scale-[1.02]"
+                >
+                  <span>Join the Platform</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+                <Link
+                  href="/charities"
+                  className="focus-ring group inline-flex h-12 items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.06] px-7 text-sm font-semibold text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/[0.12] hover:border-white/25"
+                >
+                  <HeartHandshake className="h-4 w-4 text-emerald-400" />
+                  <span>Explore Charities</span>
+                </Link>
+              </div>
+
+              {/* Trust signals */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 border-t border-white/10">
+                {[
+                  { icon: Shield, text: "Audited 40/35/25% Prize Splits" },
+                  { icon: LineChart, text: "Rolling 5 Score Weighting" },
+                  { icon: HeartHandshake, text: "Minimum 10% Giving" }
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-2 text-[11px] font-medium text-white/60">
+                    <item.icon className="h-3.5 w-3.5 text-emerald-400/70" />
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Description */}
-            <p className="max-w-xl text-base sm:text-lg leading-relaxed text-white/85 font-normal drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
-              The only platform that connects competitive Stableford scoring with
-              automated prize draws and{" "}
-              <span className="text-emerald-300 font-semibold">
-                guaranteed charitable giving.
-              </span>
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link
-                href="/signup"
-                className="focus-ring group relative inline-flex h-12 items-center justify-center gap-2.5 rounded-xl bg-emerald-400 px-7 text-sm font-bold text-obsidian-950 shadow-[0_0_30px_rgba(52,211,153,0.35)] transition-all duration-300 hover:bg-emerald-300 hover:shadow-[0_0_45px_rgba(52,211,153,0.55)] hover:scale-[1.02]"
-              >
-                <span>Join the Platform</span>
-                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/charities"
-                className="focus-ring group inline-flex h-12 items-center justify-center gap-2.5 rounded-xl border border-emerald-400/40 bg-black/40 px-7 text-sm font-semibold text-white backdrop-blur-xl transition-all duration-300 hover:bg-emerald-950/40 hover:border-emerald-300/70"
-              >
-                <HeartHandshake className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-emerald-300" />
-                <span>Explore Charities</span>
-              </Link>
-            </div>
-
-            {/* Trust signals */}
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-4 border-t border-emerald-500/20">
+            {/* Right — Floating stat cards (visible lg+) */}
+            <div className="hidden lg:flex flex-col gap-4">
               {[
-                { icon: Shield, text: "Audited 40/35/25% Prize Splits" },
-                { icon: LineChart, text: "Rolling 5 Score Weighting" },
-                { icon: HeartHandshake, text: "Minimum 10% Dedicated Giving" }
-              ].map((item) => (
-                <div key={item.text} className="flex items-center gap-2 text-[12px] font-medium text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
-                  <item.icon className="h-4 w-4 text-emerald-400" />
-                  <span>{item.text}</span>
+                { icon: Users, label: "Members", value: String(activeCount), detail: "Active subscribers" },
+                { icon: Trophy, label: "Prize Pool", value: money(paidOut), detail: "Total distributed" },
+                { icon: HeartHandshake, label: "Giving", value: `${avgCharityPct.toFixed(1)}%`, detail: "Avg charity allocation" }
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-2xl p-5 transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.15] shadow-lg"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
+                      <card.icon className="h-4 w-4" />
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/70">{card.label}</span>
+                  </div>
+                  <p className="text-3xl font-extrabold text-white tabular-nums">{card.value}</p>
+                  <p className="mt-1 text-[11px] text-white/50">{card.detail}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Right side floating stat cards (desktop only) */}
-          <div className="hidden xl:flex flex-col gap-4 ml-auto">
-            <div className="relative rounded-2xl border border-emerald-500/20 bg-black/40 p-5 backdrop-blur-xl w-56 transition-all duration-300 hover:bg-black/60 hover:border-emerald-400/40 shadow-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
-                  <Users className="h-4 w-4" />
-                </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/80">Members</span>
-              </div>
-              <p className="text-3xl font-extrabold text-white tabular-nums">{activeCount}</p>
-              <p className="mt-1 text-[11px] text-white/60">Active subscribers</p>
-            </div>
-
-            <div className="relative rounded-2xl border border-emerald-500/20 bg-black/40 p-5 backdrop-blur-xl w-56 transition-all duration-300 hover:bg-black/60 hover:border-emerald-400/40 shadow-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
-                  <Trophy className="h-4 w-4" />
-                </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/80">Prize Pool</span>
-              </div>
-              <p className="text-3xl font-extrabold text-white tabular-nums">{money(paidOut)}</p>
-              <p className="mt-1 text-[11px] text-white/60">Total distributed</p>
-            </div>
-
-            <div className="relative rounded-2xl border border-emerald-500/20 bg-black/40 p-5 backdrop-blur-xl w-56 transition-all duration-300 hover:bg-black/60 hover:border-emerald-400/40 shadow-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
-                  <HeartHandshake className="h-4 w-4" />
-                </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/80">Giving</span>
-              </div>
-              <p className="text-3xl font-extrabold text-white tabular-nums">{avgCharityPct.toFixed(1)}%</p>
-              <p className="mt-1 text-[11px] text-white/60">Avg charity allocation</p>
-            </div>
-          </div>
         </div>
-
-        {/* Bottom fade into KPI section */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-obsidian-950 to-transparent" />
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          KPI STRIP — Dark continuation of hero
-         ════════════════════════════════════════════════════════════ */}
-      <section className="relative bg-obsidian-950 pb-20 pt-4">
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE KPI STRIP — Visible only below lg
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative bg-obsidian-950 pb-16 pt-2 lg:hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Mobile KPIs (shown on smaller screens where the right side cards are hidden) */}
-          <div className="grid gap-4 sm:grid-cols-3 xl:hidden">
-            <KpiCard
-              label="Active Subscribers"
-              value={String(activeCount)}
-              detail="Eligible for upcoming monthly draw"
-            />
-            <KpiCard
-              label="Prize Pool Payouts"
-              value={money(paidOut)}
-              detail="Published and verified member winnings"
-            />
-            <KpiCard
-              label="Average Charity Allocation"
-              value={`${avgCharityPct.toFixed(1)}%`}
-              detail="Dedicated giving directed by subscribers"
-            />
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { label: "Active Subscribers", value: String(activeCount), detail: "Eligible for upcoming monthly draw" },
+              { label: "Prize Pool Payouts", value: money(paidOut), detail: "Published and verified member winnings" },
+              { label: "Avg Charity Allocation", value: `${avgCharityPct.toFixed(1)}%`, detail: "Dedicated giving directed by subscribers" }
+            ].map((kpi) => (
+              <div key={kpi.label} className="rounded-2xl border border-white/[0.08] bg-obsidian-900/80 p-5 backdrop-blur-xl">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-white tabular-nums">{kpi.value}</p>
+                <p className="mt-2 text-[11px] text-slate-500 font-medium">{kpi.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          FEATURED CHARITIES — Clean white section with premium cards
-         ════════════════════════════════════════════════════════════ */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16">
+      {/* ═══════════════════════════════════════════════════════════════════
+          FEATURED CHARITIES — Premium cards with hover effects
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end border-b border-slate-200/80 pb-6">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-forest/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-forest">
@@ -259,10 +245,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          PLATFORM PILLARS — Premium feature grid
-         ════════════════════════════════════════════════════════════ */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20">
+      {/* ═══════════════════════════════════════════════════════════════════
+          PLATFORM PILLARS — How it works, 3-column feature grid
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24">
         <div className="rounded-3xl border border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-slate-50/80 p-8 sm:p-12 shadow-soft">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <div className="inline-flex items-center gap-2 rounded-full bg-forest/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-forest mb-4">
@@ -306,9 +292,7 @@ export default async function HomePage() {
                 key={pillar.title}
                 className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-soft transition-all duration-300 hover:border-slate-300 hover:shadow-card hover:-translate-y-0.5"
               >
-                {/* Subtle gradient accent */}
                 <div className={`absolute top-0 right-0 h-32 w-32 rounded-full bg-gradient-to-br ${pillar.accent} blur-3xl opacity-60 transition-opacity group-hover:opacity-100`} />
-                
                 <div className="relative">
                   <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${pillar.accent} ring-1 ring-black/[0.03]`}>
                     <pillar.icon className={`h-5 w-5 ${pillar.iconColor}`} />
@@ -321,15 +305,15 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
- 
-       {/* ════════════════════════════════════════════════════════════
-           MEMBERSHIP & SUBSCRIPTION PLANS — Transparent giving & draw entry
-          ════════════════════════════════════════════════════════════ */}
-       <SubscriptionCards user={user} />
 
-       {/* ════════════════════════════════════════════════════════════
-           CTA BANNER — Dark premium call to action
-          ════════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          SUBSCRIPTION PLANS — Monthly & Yearly pricing cards
+         ═══════════════════════════════════════════════════════════════════ */}
+      <SubscriptionCards user={user} />
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          CTA BANNER — Dark premium call to action
+         ═══════════════════════════════════════════════════════════════════ */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20">
         <div className="relative overflow-hidden rounded-3xl bg-obsidian-950 p-8 sm:p-12 lg:p-16">
           {/* Background decoration */}
